@@ -1,0 +1,460 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -880,
+        -288
+      ],
+      "id": "8c4f1d15-6fe1-4302-aa83-22be08135efe",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://www.hacettepeteknokent.com.tr/tr/firma_rehberi/diger-30",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -672,
+        -288
+      ],
+      "id": "bf2c659a-dc9d-4419-ba41-5f2b7479cf7d",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const html = $input.first().json.data;\n\nconst regex = /<div class=\"firma_adi\">\\s*<a href=\"([^\"]+)\">([^<]+)<\\/a>/g;\n\nconst result = [];\n\nlet match;\n\nwhile ((match = regex.exec(html)) !== null) {\n\n    result.push({\n        json: {\n            company: match[2].trim(),\n            url: \"https://www.hacettepeteknokent.com.tr\" + match[1]\n        }\n    });\n\n}\n\n// İlk 16 şirkete mail gittiği için listeyi 16. indeksten (17. şirketten) itibaren kesiyoruz\nreturn result.slice(17);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -432,
+        -288
+      ],
+      "id": "97c1795d-7adb-4e60-914f-845933562557",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -160,
+        -288
+      ],
+      "id": "2bc23cfd-5a95-447e-9333-0ef6756966c3",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "url": "={{ $node[\"Loop Over Items\"].json[\"url\"] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        64,
+        -272
+      ],
+      "id": "99b1ab65-2de5-4fea-af37-1b95dc8c7eed",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// HTTP Request1'den gelen detay sayfasının HTML kodunu alıyoruz\nconst html = $input.first().json.data;\n\n// HTML içindeki e-posta adreslerini yakalamak için genel bir Regex\nconst emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g;\nconst foundEmails = html.match(emailRegex);\n\nlet companyEmail = \"\";\n\nif (foundEmails) {\n    // Teknokent'in kendi kurumsal maillerini eliyoruz (info@hacettepeteknokent... gibi mailler gelmesin)\n    const filtered = foundEmails.filter(email => !email.includes(\"hacettepeteknokent\"));\n    if (filtered.length > 0) {\n        companyEmail = filtered[0];\n    }\n}\n\n// Döngüdeki mevcut firmanın adını alıyoruz\nconst companyName = $('Loop Over Items').item.json.company;\n\nreturn {\n    json: {\n        company_name: companyName,\n        email: companyEmail\n    }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        -272
+      ],
+      "id": "4e8a41c9-2469-4c8c-bd26-a04ad340d494",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Sen üst düzey bir kurumsal iletişim uzmanı ve profesyonel insan kaynakları yöneticisisin. Görevin, adayın özgeçmişini inceleyerek hedef şirketin faaliyet alanına uygun, kurumsal, doğrudan konuya giren ve kesinlikle yapay zeka klişeleri içermeyen bir iş/staj başvuru e-postası hazırlamaktır.\n\nHEDEF ŞİRKET BİLGİSİ:\nŞirket Adı: {{ $json.company_name }}\n\nADAYIN ÖZGEÇMİŞ ÖZETİ:\nBaşkent Üniversitesi %100 İngilizce Elektrik-Elektronik Mühendisliği, Yüksek Onur Derecesi, 3.53 Ortalama. Teknik Yetkinlikler: Yazılım geliştirme (Python, C++, C#, Java, ASP.NET Core), gömülü sistemler, veri analitiği (NumPy, Pandas, SciPy, scikit-learn), makine öğrenmesi, RF ve mikrodalga devre tasarımı, haberleşme teknolojileri, MATLAB.\n\nYAZIM VE UYARLAMA KURALLARI:\n1. Hedef şirketin adını analiz et. Eğer şirket bir yazılım/bilişim/akademi firmasıysa metinde kesinlikle RF, mikrodalga veya devre tasarımı gibi elektronik kelimelerini KULLANMA. Tamamen yazılım geliştirme, makine öğrenmesi ve veri analitiği odaklı yetkinlikleri öne çıkar. Eğer şirket savunma sanayi veya elektronik firmasıysa RF, gömülü sistem ve haberleşme odaklı yetkinlikleri gururla vurgula.\n2. Kelime Seçimi Tonu: Kesinlikle \"uzmanlığım\" kelimesini kullanma; yerine \"deneyim sahibi olduğum\", \"yetkinlik geliştirdiğim\" veya \"aktif olarak kullandığım\" gibi mütevazı ama güçlü ifadeler seç.\n3. Çok fazla teknolojiyi arka arkaya listeleme. İK'nın rahat okuması için yetkinlikleri genel alanlar olarak grupla (Örn: \"Yazılım geliştirme, veri analitiği ve makine öğrenmesi alanlarında edindiğim teknik deneyim...\").\n4. Klişeleri ve Emojileri Tamamen Yasakla: \"Umarım bu e-posta sizi iyi bulur\" veya \"Bu maili size ... için yazıyorum\" gibi yapay zeka girişleri kesinlikle olmayacak. Emojiler tamamen yasak.\n5. Kapanış Cümlesi: Kesinlikle \"olumlu dönüşlerinizi sabırsızlıkla beklerim\" yazma. Bunun yerine \"Değerlendirmeniz için teşekkür eder, uygun görmeniz halinde görüşme fırsatı bulmayı memnuniyetle karşılarım.\" kalıbını kullan.\n6. Şirket adını doğal biçimde yaz.\n\nEğer şirket adı tamamen büyük harflerle geliyorsa uygun Türkçe yazım kurallarına göre biçimlendir.\n\nÖrneğin\n\nABC YAZILIM A.Ş.\n\nyerine\n\nABC Yazılım A.Ş.\n\nşeklinde yaz.\n\nÖRNEK ALTIN STANDART (Bu üslubu ve yapıyı taklit et):\n\"Sayın [Şirket Adı] İnsan Kaynakları Ekibi,\nBaşkent Üniversitesi %100 İngilizce Elektrik-Elektronik Mühendisliği Bölümünden yüksek onur derecesiyle mezun oldum. Eğitimim ve proje çalışmalarım süresince [Şirket Alanına Uygun Yetkinlikler] alanlarında teknik yetkinliklerimi geliştirme fırsatı buldum. \n[Şirket Alanına Uygun Teknolojiler] başta olmak üzere farklı teknolojilerle geliştirdiğim projeler sayesinde analitik düşünme, problem çözme ve takım çalışması becerilerimi güçlendirdim. Öğrenmeye açık ve gelişim odaklı bir mühendis olarak, şirketiniz bünyesinde yürütülen projelere katkı sunmayı ve uzun vadeli bir kariyer inşa etmeyi hedefliyorum. \nÖzgeçmişim ekte bilgilerinize sunulmuştur. Eğitimim ve yetkinliklerime uygun mevcut veya ilerleyen dönemlerde oluşabilecek pozisyonlarda değerlendirilmekten memnuniyet duyarım.\nİlginiz ve değerlendirmeniz için teşekkür eder, uygun görmeniz hâlinde sizlerle görüşme fırsatı bulmayı memnuniyetle karşılarım.\nSaygılarımla,\nAhmet Cevdet Bülbül\"\n\nÇIKTI FORMATI:\nÇıktıyı sadece aşağıdaki ham JSON formatında ver, markdown (` ` ` json) işaretleri kullanma:\n{\n  \"subject\": \"Yazılım Geliştirme ve Mühendislik Pozisyonları Hk. - Ahmet Cevdet Bülbül\",\n  \"body\": \"E-posta İçeriği\"\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        -272
+      ],
+      "id": "2ea70589-4a6a-4ca4-9c05-8ad35cd3ebfe",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "0dPRo4czSbD2YVQE",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. OpenAI'dan gelen metni güvenli bir şekilde çekelim\nlet rawText = \"\";\ntry {\n    // Alternatif n8n çıktı formatlarını kontrol ederek metni yakalıyoruz\n    rawText = $input.first().json.text || \n              $input.first().json.output?.[0]?.content?.[0]?.text || \n              $input.first().json.message?.content || \"\";\n} catch (e) {\n    rawText = \"\";\n}\n\n// 2. Yapay zekanın koyduğu gereksiz ```json ve ``` tırnak işaretlerini temizliyoruz\nlet cleanText = rawText.replace(/```json/gi, \"\").replace(/```/g, \"\").trim();\n\nlet mailData = { subject: \"\", body: \"\" };\n\n// 3. JSON'a dönüştürmeyi deniyoruz\ntry {\n    mailData = JSON.parse(cleanText);\n} catch (e) {\n    // Eğer yapay zeka düz metin ürettiyse veya JSON kırıldıysa, tüm metni body'ye kurtarma planı:\n    mailData.subject = \"Yazılım ve Mühendislik Pozisyonları Hk.\";\n    mailData.body = cleanText;\n}\n\n// 4. Bir önceki döngü verisinden şirket bilgilerini çekiyoruz\n// Not: Döngü içinde en kararlı çalışan metot $g() veya direkt bağlı girdiyi okumaktır.\nconst companyEmail = $('Code in JavaScript1').item.json.email;\nconst companyName = $('Code in JavaScript1').item.json.company_name;\n\nreturn [{\n    json: {\n        company_name: companyName,\n        to_email: companyEmail,\n        subject: mailData.subject || \"Yazılım ve Mühendislik Pozisyonları Hk.\",\n        body: mailData.body\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        -272
+      ],
+      "id": "95bad778-47b0-421c-adea-3d58709cb722",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1in5RoiRdpAJb2-R4ahu1jbxCst-wp11utWYekaPrpKc",
+          "mode": "list",
+          "cachedResultName": "Teknokent Başvuruları",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1in5RoiRdpAJb2-R4ahu1jbxCst-wp11utWYekaPrpKc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sayfa1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1in5RoiRdpAJb2-R4ahu1jbxCst-wp11utWYekaPrpKc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Firma Adı": "={{ $json.company_name }}",
+            "E-posta": "={{ $json.to_email }}",
+            "Konu Başlığı": "={{ $json.subject }}",
+            "Tarih": "={{ $now.format('yyyy-MM-dd HH:mm') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Firma Adı",
+              "displayName": "Firma Adı",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "E-posta",
+              "displayName": "E-posta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Konu Başlığı",
+              "displayName": "Konu Başlığı",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tarih",
+              "displayName": "Tarih",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1120,
+        -272
+      ],
+      "id": "2189a8ea-7da5-432a-bc1c-107fe3058d5d",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UskG1mSUD0ajYNFs",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Append row in sheet').item.json['E-posta'] }}",
+        "subject": "={{ $('Append row in sheet').item.json['Konu Başlığı'] }}",
+        "emailType": "text",
+        "message": "={{ $('Code in JavaScript2').item.json.body }}",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        -16
+      ],
+      "id": "4f3abf89-1daf-4d2a-b4e0-d7512c7cc128",
+      "name": "Send a message",
+      "webhookId": "78a2dc17-c1cd-4fcf-911f-2eb93f0f9a6a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "E38z0VeiuwX1EyqJ",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://docs.google.com/uc?export=download&id=1MF8K57KCGlScgAR8ndquDCFoR2D7syt2",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1328,
+        -272
+      ],
+      "id": "3b972ecb-e2a8-4538-8209-071e78d6896d",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "amount": 25
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1184,
+        -16
+      ],
+      "id": "fa2f5fbe-62b1-41fc-b285-d715e08868a8",
+      "name": "Wait",
+      "webhookId": "de614c45-a05f-40c4-8bee-c197cd289541"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        960,
+        -272
+      ],
+      "id": "2877b722-cd1c-4521-a2da-82de189b200a",
+      "name": "Wait1",
+      "webhookId": "c15b1da0-aa3c-4df1-870b-425e5befbc96"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "09a974ec-9295-41c4-9101-726d13fc3b34",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c1cb6b54b8cfc47a392bff858e58e9c1ae8ca62e0cc4600e6a7bd9e75e131e80"
+  },
+  "nodeGroups": [],
+  "id": "OAkQW75zWJhp1Wlm",
+  "tags": []
+}
