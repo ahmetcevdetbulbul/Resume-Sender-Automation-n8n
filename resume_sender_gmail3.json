@@ -1,0 +1,752 @@
+{
+  "name": "Company Outreach Automation",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "6edc659a-4da3-493f-bdc5-3e0ef63f4d36",
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        144,
+        1008
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.odtuteknokent.com.tr/tr/firmalar/tum-firmalaryedek.php",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        400,
+        1008
+      ],
+      "id": "475fc6fa-7459-4f7c-a1da-37041059eb91",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "company",
+              "cssSelector": "table tr td:nth-child(1)",
+              "returnArray": true
+            },
+            {
+              "key": "website",
+              "cssSelector": "table tr td:nth-child(2) a",
+              "returnValue": "attribute",
+              "attribute": "href",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        656,
+        1008
+      ],
+      "id": "7efb7744-2648-4816-8221-bd3e86c56db5",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "jsCode": "const companies = $input.first().json.company;\nconst websites = $input.first().json.website;\n\nconst result = [];\n\n// Zaten gönderilmiş veya pas geçilecek tüm şirketlerin listesi\nconst pasGecilecekSirketler = [\n  \"3Y TEKNOLOJİ YAZILIM DONANIM BİLİŞİM ELEKTRONİK DANIŞMANLIK EĞİTİM SANAYİ VE TİCARET LİMİTED ŞİRKETİ\",\n  \"3Y TEKNOLOJİ YAZILIM DONANIM BİLİŞİM ELEKTRONİK DANIŞMANLIK EĞİTİM SANAYİ VE TİCARET LİMİTED ŞİRKETİ3Y TEKNOLOJİ YAZILIM DONANIM BİLİŞİM ELEKTRONİK DANIŞMANLIK EĞİTİM SANAYİ VE TİCARET LİMİTED ŞİRKETİ\",\n  \"AEON GAME OYUN STÜDYO YAZILIM VE ANİMASYON ANONİM ŞİRKETİ\",\n  \"AEROMS MÜHENDİSLİK DANIŞMANLIK YAZILIM HİZMETLERİ SAN. VE TİC. A.Ş.\",\n  \"AEROTİM MÜHENDİSLİK YAZILIM VE DANIŞMANLIK SANAYİ TİCARET LİMİTED ŞİRKETİ\",\n  \"Agcurate Bilgi Teknolojileri Anonim Şirketi\",\n  \"AGE BİLGİSAYAR SİSTEM OTOMASYON FAALİYETLERİ SANAYİ VE TİCARET LİMİTED ŞİRKETİ\",\n  \"AINTSOFT BİLİŞİM TEKNOLOJİLERİ DANIŞMANLIK TİCARET LİMİTED ŞİRKETİ\",\n  \"Aksöz Makina Sanayi Ticaret Limited Şirketi\",\n  \"AMP YAZILIM SANAYİ VE TİCARET LİMİTED ŞİRKETİ ANKARA ŞUBESİ\",\n  \"ANKAREF İNOVASYON VE TEKNOLOJİ ANONİM ŞİRKETİ\",\n  \"ANKETEK ELEKTRONİK TEKNOLOJİ TİCARET VE SANAYİ LİMİTED ŞİRKETİ\",\n  \"ANOVA ARGE TEKNOLOJİLERİ SANAYİ VE TİCARET ANONİM ŞİRKETİ\",\n  \"ARDİC ARAŞTIRMA GELİŞTİRME LTD. ŞTİ.\",\n  \"Arduvaz Mühendislik Sanayi ve Ticaret Limited Şirketi\",\n  \"ARF BİLGİ TEKNOLOJİLERİ YAZILIM EĞİTİM VE DANIŞMANLIK HİZMETLERİ TİCARET LİMİTED ŞİRKETİ\",\n  \"ARGEDOR BİLİŞİM TEKNOLOJİLERİ SANAYİ VE TİCARET A.Ş.\",\n  \"ARGOSAİ TEKNOLOJİ ANONİM ŞİRKETİ\",\n  \"ARLENTUS KONTROL ELEKTRONİK ELEKTRİK BİLG. YAZ. SAN. TİC. A.Ş.\",\n  \"ARMAKOM BİLİŞİM TEKNOLOJİLERİ A.Ş.\",\n  \"Arpanet Bilişim Teknolojileri Anonim Şirketi\",\n  \"ARVENTO MOBİL SİSTEMLER A.Ş.\",\n  \"Asis Elektronik ve Bilişim Sistemleri A.Ş.\",\n  \"AURVİS BİLİŞİM YAZILIM DANIŞMANLIK ARAŞTIRMA GELİŞTİRME TİCARET LİMİTED ŞİRKETİ\",\n  \"AVEZ ELEKTRONİK İLETİŞİM EĞİTİM DANIŞMANLIĞI TİCARET ANONİM ŞİRKETİ\",\n  \"AYDIN YAZILIM VE ELEKTRONİK SANAYİ ANONİM ŞİRKETİ\",\n  \"Backpack Games Yazılım Anonim Şirketi\"\n];\n\n// Türkçe karakterleri standart harflere çeviren ve boşluk/noktalama işaretlerini silen temizlik fonksiyonu\nfunction temizle(metin) {\n  if (!metin) return \"\";\n  let str = metin.toString().toLowerCase();\n  \n  // Türkçe karakter dönüşümleri\n  const charMap = {\n    'ç': 'c', 'ğ': 'g', 'ı': 'i', 'i': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u',\n    'â': 'a', 'î': 'i', 'û': 'u'\n  };\n  \n  str = str.split('').map(char => charMap[char] || char).join('');\n  \n  // Noktalama işaretlerini, satır sonlarını ve tüm boşlukları temizle\n  return str.replace(/[\\s\\n\\r\\t.,\\/#!$%\\^&\\*;:{}=\\-_`~()]/g, \"\").trim();\n}\n\n// Pas geçileceklerin temizlenmiş hallerini önbelleğe alalım\nconst temizPasGecilecekler = pasGecilecekSirketler.map(s => temizle(s));\n\nfor (let i = 0; i < companies.length; i++) {\n  // İlk 60 şirketi tamamen es geçmek için index kontrolü (0'dan başladığı için < 60)\n  if (i < 340) {\n    continue;\n  }\n\n  const company = (companies[i] || \"\").trim();\n  let website = (websites[i] || \"\").trim();\n\n  if (!company) continue;\n\n  const temizMevcutSirket = temizle(company);\n\n  // Listede veya pas geçilecekler listesinde eşleşme var mı kontrolü\n  const zatenPasGecilmeli = temizPasGecilecekler.some(pasGecilen => \n    temizMevcutSirket.includes(pasGecilen) || pasGecilen.includes(temizMevcutSirket)\n  );\n\n  if (zatenPasGecilmeli) {\n    continue;\n  }\n\n  if (\n    website &&\n    !website.startsWith(\"http://\") &&\n    !website.startsWith(\"https://\")\n  ) {\n    website = \"https://\" + website;\n  }\n\n  result.push({\n    json: {\n      companyName: company,\n      website: website\n    }\n  });\n}\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        864,
+        1008
+      ],
+      "id": "f3f44277-0904-4b9e-9249-32b5149a6c52",
+      "name": "Code in JavaScript",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "671c00d9-786b-46b0-bc23-1aa2afa2f16e",
+              "leftValue": "={{ $json.website }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1296,
+        1024
+      ],
+      "id": "d6350897-348d-41ad-8bae-1ee5f72ba6f0",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.website }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "timeout": 20000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1456,
+        704
+      ],
+      "id": "4e3cff3b-48ce-4919-93e4-f7de7b57f8e2",
+      "name": "HTTP Request1",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1072,
+        1008
+      ],
+      "id": "abf70538-f43c-422c-a3ef-b31a9aab482e",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Giriş verisinden html'i güvenli bir şekilde alalım\nconst html = $json.data || \"\";\n\n// Regex ile mail adreslerini bulalım\nconst emails = html.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi) || [];\n\nreturn [\n  {\n    json: {\n      // Önceki düğümlerden gelen tüm verileri (companyName, website vb.) koruyoruz\n      ...$json, \n      // Bulunan e-postaları dizi olarak ekliyoruz\n      emails: emails\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        704
+      ],
+      "id": "d134af7d-303b-4d75-a875-c0807ac68e5a",
+      "name": "Code in JavaScript1",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3d61f368-1f79-4e2d-82a4-2f0f8b09107f",
+              "leftValue": "={{ $json.emails }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1872,
+        704
+      ],
+      "id": "f5087df0-81ee-4ac6-aa93-1371cc1d616b",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2144,
+        976
+      ],
+      "id": "e29c7e90-170c-4afc-89f0-04c3e4b97faf",
+      "name": "HTTP Request - Bulk Contacts",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n'in o anki Loop Over Items döngüsündeki aktif elemanın web sitesini çekiyoruz.\nlet baseUrl = \"\";\ntry {\n  baseUrl = $('Loop Over Items').item.json.website || \"\";\n} catch (e) {\n  baseUrl = $json.website || \"\";\n}\n\nconst companyName = $('Loop Over Items').item.json.companyName || \"\";\n\nif (baseUrl.endsWith('/')) {\n  baseUrl = baseUrl.slice(0, -1);\n}\n\nif (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {\n  baseUrl = 'https://' + baseUrl;\n}\n\n// Olası iletişim sayfaları\nconst paths = [\n  \"/iletisim\",\n  \"/contact\",\n  \"/contact-us\",\n  \"/hakkimizda\",\n  \"/about\",\n  \"/about-us\",\n  \"/kariyer\",\n  \"/career\"\n];\n\n// N8N'in HTTP Request düğümünün her bir URL'yi aynı anda \n// ayrı birer istek olarak atabilmesi için 8 elemanlı bir liste dönüyoruz.\nreturn paths.map(path => {\n  return {\n    json: {\n      url: baseUrl + path,\n      companyName: companyName,\n      website: baseUrl\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1936,
+        976
+      ],
+      "id": "7c4a048d-b60e-4c63-91e4-fafa6853cfa0",
+      "name": "Search Contact Pages"
+    },
+    {
+      "parameters": {
+        "jsCode": "let allEmails = [];\nlet companyName = \"\";\nlet website = \"\";\n\n// Gelen 8 farklı sayfa isteğinin yanıtlarını tek tek geziyoruz\nfor (const item of $input.all()) {\n  const html = item.json.data || \"\";\n  \n  // Şirket bilgilerini yedekleyelim\n  if (!companyName) companyName = item.json.companyName;\n  if (!website) website = item.json.website;\n\n  // Regex ile mail adreslerini arıyoruz\n  const emails = html.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi) || [];\n  \n  if (emails.length > 0) {\n    allEmails = allEmails.concat(emails);\n  }\n}\n\n// Aynı olan mailleri temizleyelim (Unique hale getirelim)\nconst uniqueEmails = [...new Set(allEmails)];\n\nreturn [\n  {\n    json: {\n      companyName: companyName,\n      website: website,\n      emails: uniqueEmails,\n      source: uniqueEmails.length > 0 ? \"Contact Pages\" : \"Not Found\"\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2352,
+        976
+      ],
+      "id": "36514f0b-ed09-42bd-8b94-afe1224e082d",
+      "name": "Extract Emails Bulk"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "046abf7e-2d80-4fca-805d-a320e12c34eb",
+              "leftValue": "={{ $json.emails.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2560,
+        976
+      ],
+      "id": "fcae7d4f-cb21-475f-973f-a9c8c8321a13",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Sen üst düzey bir kurumsal iletişim uzmanı ve profesyonel insan kaynakları yöneticisisin. Görevin, adayın özgeçmişini inceleyerek hedef şirketin faaliyet alanına uygun, kurumsal, doğrudan konuya giren ve kesinlikle yapay zeka klişeleri içermeyen bir iş başvuru e-postası hazırlamaktır.\n\nHEDEF ŞİRKET BİLGİSİ:\nŞirket Adı: {{ $('Loop Over Items').item.json.companyName }}\n\nADAYIN ÖZGEÇMİŞ ÖZETİ:\nBaşkent Üniversitesi %100 İngilizce Elektrik-Elektronik Mühendisliği, Yüksek Onur Derecesi, 3.53 Ortalama. Teknik Yetkinlikler: Yazılım geliştirme (Python, C++, C#, Java, ASP.NET Core), gömülü sistemler, veri analitiği (NumPy, Pandas, SciPy, scikit-learn), makine öğrenmesi, RF ve mikrodalga devre tasarımı, haberleşme teknolojileri, MATLAB.\n\nYAZIM VE UYARLAMA KURALLARI:\n1. Hedef şirketin adını analiz et. Eğer şirket bir yazılım/bilişim/akademi firmasıysa metinde kesinlikle RF, mikrodalga veya devre tasarımı gibi elektronik kelimelerini KULLANMA. Tamamen yazılım geliştirme, makine öğrenmesi ve veri analitiği odaklı yetkinlikleri öne çıkar. Eğer şirket savunma sanayi veya elektronik firmasıysa RF, gömülü sistem ve haberleşme odaklı yetkinlikleri gururla vurgula.\n2. Kelime Seçimi Tonu: Kesinlikle \"uzmanlığım\" kelimesini kullanma; yerine \"deneyim sahibi olduğum\", \"yetkinlik geliştirdiğim\" veya \"aktif olarak kullandığım\" gibi mütevazı ama güçlü ifadeler seç.\n3. Çok fazla teknolojiyi arka arkaya listeleme. İK'nın rahat okuması için yetkinlikleri genel alanlar olarak grupla (Örn: \"Yazılım geliştirme, veri analitiği ve makine öğrenmesi alanlarında edindiğim teknik deneyim...\").\n4. Klişeleri ve Emojileri Tamamen Yasakla: \"Umarım bu e-posta sizi iyi bulur\" veya \"Bu maili size ... için yazıyorum\" gibi yapay zeka girişleri kesinlikle olmayacak. Emojiler tamamen yasak.\n5. Kapanış Cümlesi: Kesinlikle \"olumlu dönüşlerinizi sabırsızlıkla beklerim\" yazma. Bunun yerine \"Değerlendirmeniz için teşekkür eder, uygun görmeniz halinde görüşme fırsatı bulmayı memnuniyetle karşılarım.\" kalıbını kullan.\n6. Şirket adını doğal biçimde yaz.\n\nEğer şirket adı tamamen büyük harflerle geliyorsa uygun Türkçe yazım kurallarına göre biçimlendir.\n\nÖrneğin\n\nABC YAZILIM A.Ş.\n\nyerine\n\nABC Yazılım \n\nşeklinde yaz.\n\nÖRNEK ALTIN STANDART (Bu üslubu ve yapıyı taklit et):\n\"Sayın [Şirket Adı] İnsan Kaynakları Ekibi,\nBaşkent Üniversitesi %100 İngilizce Elektrik-Elektronik Mühendisliği Bölümünden 3.53/4.00 not ortalaması ile yüksek onur derecesiyle mezun oldum. Eğitimim ve proje çalışmalarım süresince [Şirket Alanına Uygun Yetkinlikler] alanlarında teknik yetkinliklerimi geliştirme fırsatı buldum. \n[Şirket Alanına Uygun Teknolojiler] başta olmak üzere farklı teknolojilerle geliştirdiğim projeler sayesinde analitik düşünme, problem çözme ve takım çalışması becerilerimi güçlendirdim. Öğrenmeye açık ve gelişim odaklı bir mühendis olarak, şirketiniz bünyesinde yürütülen projelere katkı sunmayı ve uzun vadeli bir kariyer inşa etmeyi hedefliyorum. \nÖzgeçmişim ekte bilgilerinize sunulmuştur. Eğitimim ve yetkinliklerime uygun mevcut veya ilerleyen dönemlerde oluşabilecek pozisyonlarda değerlendirilmekten memnuniyet duyarım.\nİlginiz ve değerlendirmeniz için teşekkür eder, uygun görmeniz hâlinde sizlerle görüşme fırsatı bulmayı memnuniyetle karşılarım.\nSaygılarımla,\nAhmet Cevdet Bülbül\"\n\nÇIKTI FORMATI:\nÇıktıyı sadece aşağıdaki ham JSON formatında ver, markdown (` ` ` json) işaretleri kullanma:\n{\n  \"subject\": \"Yazılım Geliştirme ve Mühendislik Pozisyonları Hk. - Ahmet Cevdet Bülbül\",\n  \"body\": \"E-posta İçeriği\"\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        2896,
+        848
+      ],
+      "id": "c38a229b-4139-4548-953a-ca238d874287",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "0dPRo4czSbD2YVQE",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1JelTejIpxTofl3YaHCjYJsYlnn1gsK7g8iOFnM-Ck0M",
+          "mode": "list",
+          "cachedResultName": "ODTU teknokent başvuru",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JelTejIpxTofl3YaHCjYJsYlnn1gsK7g8iOFnM-Ck0M/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sayfa1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1in5RoiRdpAJb2-R4ahu1jbxCst-wp11utWYekaPrpKc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "E-posta": "={{ $('Merge').item.json.emails[0] }}",
+            "Sirket Adi": "={{ $('Loop Over Items').item.json.companyName }}",
+            "Web Sitesi": "={{ $('Loop Over Items').item.json.website }}",
+            "Gonderim Tarihi": "={{ $now.format('yyyy-MM-dd HH:mm') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Sirket Adi",
+              "displayName": "Sirket Adi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Web Sitesi",
+              "displayName": "Web Sitesi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "E-posta",
+              "displayName": "E-posta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Durum",
+              "displayName": "Durum",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Gonderim Tarihi",
+              "displayName": "Gonderim Tarihi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3536,
+        976
+      ],
+      "id": "efbbad1b-a8ba-4dba-867a-74a7460a1261",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "UskG1mSUD0ajYNFs",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Merge').item.json.emails[0] }}",
+        "subject": "={{ $('Code in JavaScript3').item.json.subject }}",
+        "emailType": "text",
+        "message": "={{ $('Code in JavaScript3').item.json.body }}",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        3920,
+        976
+      ],
+      "id": "3d76183b-99a5-4ec9-974b-847b345bb491",
+      "name": "Send a message",
+      "webhookId": "78a2dc17-c1cd-4fcf-911f-2eb93f0f9a6a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "E38z0VeiuwX1EyqJ",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3760,
+        1360
+      ],
+      "id": "8bcb7bc5-2f13-4f18-95c5-d09e3ba25b9e",
+      "name": "Wait",
+      "webhookId": "de614c45-a05f-40c4-8bee-c197cd289541"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3376,
+        976
+      ],
+      "id": "3561e3fd-017c-4310-ad76-e3896f3bac77",
+      "name": "Wait1",
+      "webhookId": "c15b1da0-aa3c-4df1-870b-425e5befbc96"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. OpenAI'dan gelen metni güvenli bir şekilde çekelim\nlet rawText = \"\";\ntry {\n    // Alternatif n8n çıktı formatlarını kontrol ederek metni yakalıyoruz\n    rawText = $input.first().json.text || \n              $input.first().json.output?.[0]?.content?.[0]?.text || \n              $input.first().json.message?.content || \"\";\n} catch (e) {\n    rawText = \"\";\n}\n\n// 2. Yapay zekanın koyduğu gereksiz ```json ve ``` tırnak işaretlerini temizliyoruz\nlet cleanText = rawText.replace(/```json/gi, \"\").replace(/```/g, \"\").trim();\n\nlet mailData = { subject: \"\", body: \"\" };\n\n// 3. JSON'a dönüştürmeyi deniyoruz\ntry {\n    mailData = JSON.parse(cleanText);\n} catch (e) {\n    // Eğer yapay zeka düz metin ürettiyse veya JSON kırıldıysa, tüm metni body'ye kurtarma planı:\n    mailData.subject = \"Yazılım ve Mühendislik Pozisyonları Hk.\";\n    mailData.body = cleanText;\n}\n\n// 4. Bir önceki döngü verisinden şirket bilgilerini çekiyoruz\n// Not: Döngü içinde en kararlı çalışan metot $g() veya direkt bağlı girdiyi okumaktır.\nconst companyEmail = $('Code in JavaScript1').item.json.email;\nconst companyName = $('Code in JavaScript1').item.json.company_name;\n\nreturn [{\n    json: {\n        company_name: companyName,\n        to_email: companyEmail,\n        subject: mailData.subject || \"Yazılım ve Mühendislik Pozisyonları Hk.\",\n        body: mailData.body\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3168,
+        976
+      ],
+      "id": "597dbfb5-4a0b-4698-b9da-119e61d4c48b",
+      "name": "Code in JavaScript3",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://docs.google.com/uc?export=download&id=1MF8K57KCGlScgAR8ndquDCFoR2D7syt2",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        3744,
+        976
+      ],
+      "id": "c2218cb9-a717-40e6-b2c5-187357838d45",
+      "name": "HTTP Request3"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2688,
+        720
+      ],
+      "id": "f3f49960-0380-42d5-80a5-c66b93328e00",
+      "name": "Merge"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Search Contact Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Contact Pages": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Bulk Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Bulk Contacts": {
+      "main": [
+        [
+          {
+            "node": "Extract Emails Bulk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Emails Bulk": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "2beef241-28e2-456a-a9a5-bbef1577b1e8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c1cb6b54b8cfc47a392bff858e58e9c1ae8ca62e0cc4600e6a7bd9e75e131e80"
+  },
+  "nodeGroups": [],
+  "id": "gNqZRTwMeC6XSBdR",
+  "tags": []
+}
