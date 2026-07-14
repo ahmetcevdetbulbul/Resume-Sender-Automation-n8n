@@ -20,7 +20,7 @@ This repository maintains three operational versions of the automation pipeline 
 
 ### 🌟 Version 3.0 (Advanced Multi-Stage Contact Discovery & Unified Sandbox Execution) - *Latest*
 * **Workflow Source:** `resume_sender_gmail3.json`
-* **Visual Map:** ![v3 Blueprint](snapshot3.png)
+* **Visual Map:** ![v3 Blueprint](version3_overflow.png)
 
 ---
 
