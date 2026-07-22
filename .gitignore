@@ -1,0 +1,11 @@
+.env
+credentials.json
+token.json
+data/
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Kisisel CV dosyasi - public repoya gitmesin
+ACB_CV Resume.pdf

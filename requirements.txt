@@ -1,0 +1,12 @@
+requests
+playwright
+beautifulsoup4
+lxml
+python-dotenv
+openai
+pandas
+openpyxl
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
